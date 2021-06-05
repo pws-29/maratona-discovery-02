@@ -4,10 +4,14 @@ const express = require("express")
 const server = express()
 // Importar rotas
 const routes = require('./routes')
+// Importar módulo Path (with file and directory paths)
+const path = require("path")
 // Setando minha view engine. Processamento do html, explorano com JS e entregando HTML puro.
 // BasePath do ejs é o 'views'.
 server.set('view engine', 'ejs')
 
+// Mudar a localização da pasta views
+server.set('views', path.join(__dirname, 'views'))
 // habilitar arquivos statics e criar rotas
 server.use(express.static("public"))
 

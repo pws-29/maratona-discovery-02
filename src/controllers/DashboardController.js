@@ -1,0 +1,45 @@
+const Job = require("../model/Job")
+const JobUtils = require("../utils/JobUtils")
+const Profile = require("../model/Profile")
+
+module.exports = {
+  index(req, res) {
+    // Criar um job novo
+    const jobs = Job.get();
+    const profile = Profile.get();
+
+    let statusCount = {
+        progress: 0,
+        done: 0,
+        total: jobs.length
+    };
+
+    // total de hora por dia de cada job em progresso
+    let jobTotalHours = 0
+
+    const updatedJobs = jobs.map((job) => {
+      // ajustes no job; Cálculos (tempo restante)
+      const remaining = JobUtils.remainingDays(job);
+      const status = remaining <= 0 ? "done" : "progress";
+      
+      //somando a quantidade de status
+      // status = done ou progress, o retorno do ternário contará +1 no meu ojeto statusCount
+      statusCount[status] += 1;
+
+      // total de hora por dia de cada job em progresso
+      jobTotalHours = status === 'progress' ? jobTotalHours + Number(job['daily-hours']) : jobTotalHours
+      
+      return {
+        ...job, //espalhamento de objeto
+        remaining,
+        status,
+        budget: JobUtils.calculateBudget(job, profile["value-hour"]),
+      };
+    });
+
+    // (qtd de horas que quero trabalhar) - (qtd horas/dia de cada job in progress)
+    const freeHours = profile["hours-per-day"] - jobTotalHours;
+
+    return res.render("index", { jobs: updatedJobs, profile: profile, statusCount: statusCount, freeHours: freeHours });
+  },
+};
