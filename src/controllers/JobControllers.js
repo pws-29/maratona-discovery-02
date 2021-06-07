@@ -8,26 +8,22 @@ module.exports = {
     return res.render("job"); // abre a págian "Job"
   },
 
-  save(req, res) {
-    const jobs = Job.get(0);
-
-    // ref req.body { name: 'sf', 'daily-hours': '5', 'total-hours': '2' }
-    const lastId = jobs[jobs.length - 1]?.id || 0;
-
-    jobs.push({
-      id: lastId + 1,
+  async save(req, res) {
+    // Existia um ID: , mas agora o banco de dados autoincrementa o próprio id
+    await Job.create({
       name: req.body.name,
       "daily-hours": req.body["daily-hours"],
       "total-hours": req.body["total-hours"],
       created_at: Date.now(), // atribuindo data de hoje
     });
+
     return res.redirect("/");
   },
 
   // Job/edit, informações corretas na página
-  show(req, res) {
-    const jobs = Job.get();
-    const profile = Profile.get();
+  async show(req, res) {
+    const jobs = await Job.get();
+    const profile = await Profile.get();
 
     const jobId = req.params.id; //exato nome da url
 
@@ -41,42 +37,24 @@ module.exports = {
     return res.render("job-edit", { job });
   },
 
-  update(req, res) {
-    const jobs = Job.get();
-
+  async update(req, res) {
     const jobId = req.params.id; //exato nome da url
-
-    const job = jobs.find((job) => Number(job.id) === Number(jobId)); //joga na constante
-    if (!job) {
-      return res.send("Job not found!");
-    }
-
+   
     const updatedJob = {
-      // expalhando o job correspondete do ID
-      ...job,
       //override
       name: req.body.name,
       "total-hours": req.body["total-hours"], //dados enviados do form front
       "daily-hours": req.body["daily-hours"],
     };
 
-    const newJobs = jobs.map((job) => {
-      // updating job
-      if (Number(job.id) === Number(jobId)) {
-        job = updatedJob;
-      }
-
-      return job;
-    });
-
-    Job.update(newJobs);
+    await Job.update(updatedJob, jobId);
 
     res.redirect("/job/" + jobId);
   },
 
-  delete(req, res) {
+  async delete(req, res) {
     const jobId = req.params.id;
-    Job.delete(jobId);
+    await Job.delete(jobId);
     return res.redirect("/");
   },
 };
